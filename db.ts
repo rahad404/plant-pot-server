@@ -1,17 +1,17 @@
 import { MongoClient, ServerApiVersion, Db, Collection, Document } from "mongodb";
 
-const client = new MongoClient(process.env.MONGODB_URI!, {
-   serverApi: {
-      version: ServerApiVersion.v1,
-      strict: true,
-      deprecationErrors: true,
-   },
-});
-
+let client: MongoClient | null = null;
 let db: Db | null = null;
 
 async function connectDB(): Promise<Db> {
    if (db) return db;
+   client = new MongoClient(process.env.MONGODB_URI!, {
+      serverApi: {
+         version: ServerApiVersion.v1,
+         strict: true,
+         deprecationErrors: true,
+      },
+   });
    await client.connect();
    console.log("MongoDB connected successfully!");
    db = client.db("plantshop");
