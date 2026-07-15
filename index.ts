@@ -20,9 +20,34 @@ import ordersRoutes from "./routes/orders.routes";
 const app = express();
 const port = process.env.PORT || 5000;
 
-app.use(cors({ origin: process.env.CLIENT_URL, credentials: true }));
+// Support multiple allowed origins via comma-separated CLIENT_URL
+const allowedOrigins = (process.env.CLIENT_URL || "")
+    .split(",")
+    .map((o) => o.trim())
+    .filter(Boolean);
+
+app.use(
+    cors({
+        origin: (origin, callback) => {
+            if (!origin) return callback(null, true);
+            if (allowedOrigins.includes(origin)) return callback(null, true);
+            callback(new Error(`CORS: origin ${origin} not allowed`));
+        },
+        credentials: true,
+    })
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Lazily connect to MongoDB on every request if not connected (for Vercel serverless / local resilience)
+app.use(async (_req: Request, _res: Response, next: NextFunction) => {
+    try {
+        await connectDB();
+        next();
+    } catch (error) {
+        next(error);
+    }
+});
 
 app.get("/", (_req: Request, res: Response) => {
     res.send("Plant shop server is running!");
@@ -44,16 +69,19 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
     res.status(500).json({ message: "Something went wrong!" });
 });
 
-connectDB()
-    .then(() => {
-       app.listen(port, () => {
-          console.log(`Plant shop server listening on port ${port}`);
-       });
-    })
-    .catch((error: Error) => {
-       console.error("Failed to connect to MongoDB:", error);
-       process.exit(1);
-    });
+// For local testing, listen on the port
+if (process.env.VERCEL !== "1") {
+    connectDB()
+        .then(() => {
+           app.listen(port, () => {
+              console.log(`Plant shop server listening on port ${port}`);
+           });
+        })
+        .catch((error: Error) => {
+           console.error("Failed to connect to MongoDB:", error);
+           process.exit(1);
+        });
+}
 
 process.on("SIGINT", async () => {
     if (client) await client.close();
