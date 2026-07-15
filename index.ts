@@ -10,13 +10,6 @@ import adminOrdersRoutes from "./routes/admin.orders.routes";
 import contactRoutes from "./routes/contact.routes";
 import ordersRoutes from "./routes/orders.routes";
 
-["MONGODB_URI", "CLIENT_URL"].forEach((key) => {
-    if (!process.env[key]) {
-       console.error(`Missing required env var: ${key}`);
-       process.exit(1);
-    }
-});
-
 const app = express();
 const port = process.env.PORT || 5000;
 
@@ -79,7 +72,6 @@ if (process.env.VERCEL !== "1") {
         })
         .catch((error: Error) => {
            console.error("Failed to connect to MongoDB:", error);
-           process.exit(1);
         });
 }
 
