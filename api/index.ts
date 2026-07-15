@@ -1,1 +1,2 @@
-// Deprecated: Vercel now routes directly to index.ts. This file can be safely deleted.
+import app from "../index";
+export default app;
