@@ -1,7 +1,18 @@
 import { createRemoteJWKSet, jwtVerify } from "jose";
 import { Request, Response, NextFunction } from "express";
 
-const JWKS = createRemoteJWKSet(new URL(`${process.env.CLIENT_URL}/api/auth/jwks`));
+let JWKS: ReturnType<typeof createRemoteJWKSet> | null = null;
+
+function getJWKS() {
+   if (!JWKS) {
+      const clientUrl = process.env.CLIENT_URL;
+      if (!clientUrl) {
+         throw new Error("CLIENT_URL environment variable is not set");
+      }
+      JWKS = createRemoteJWKSet(new URL(`${clientUrl}/api/auth/jwks`));
+   }
+   return JWKS;
+}
 
 const verifyToken = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
    const authHeader = req?.headers.authorization;
@@ -17,7 +28,8 @@ const verifyToken = async (req: Request, res: Response, next: NextFunction): Pro
    }
 
    try {
-      const { payload } = await jwtVerify(token, JWKS);
+      const jwks = getJWKS();
+      const { payload } = await jwtVerify(token, jwks);
       req.user = payload as Request["user"];
       next();
    } catch (error) {

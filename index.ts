@@ -1,6 +1,10 @@
-import "dotenv/config";
+import dotenv from "dotenv";
 import express, { Request, Response, NextFunction } from "express";
 import cors from "cors";
+
+if (process.env.VERCEL !== "1") {
+    dotenv.config();
+}
 
 import { connectDB, client } from "./db";
 import usersRoutes from "./routes/users.routes";

@@ -5,13 +5,22 @@ let db: Db | null = null;
 
 async function connectDB(): Promise<Db> {
    if (db) return db;
-   client = new MongoClient(process.env.MONGODB_URI!, {
+
+   const uri = process.env.MONGODB_URI;
+   if (!uri) {
+      throw new Error("MONGODB_URI environment variable is not set");
+   }
+
+   client = new MongoClient(uri, {
       serverApi: {
          version: ServerApiVersion.v1,
          strict: true,
          deprecationErrors: true,
       },
+      tls: true,
+      tlsAllowInvalidCertificates: true,
    });
+
    await client.connect();
    console.log("MongoDB connected successfully!");
    db = client.db("plantshop");
